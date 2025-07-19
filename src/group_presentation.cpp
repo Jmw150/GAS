@@ -1,5 +1,5 @@
 /* TODO:
-    - ||done|| lower central calculation 
+    - ||done|| lower central calculation
     - ||done|| derived series calculation
     - ||done|| quotient groups
     - group actions
@@ -10,13 +10,11 @@
 
 #include <iostream>
 #include <set>
-#include <vector>
+
 
 using std::string;
 using std::set;
-using std::vector;
-using std::cout;
-using std::endl;
+
 
 // printing sets
 //{
@@ -205,8 +203,8 @@ Word commutator(const Word& a, const Word& b)
 }
 
 GroupPresentation commutator(
-    const GroupPresentation& A, 
-    const GroupPresentation& B) 
+    const GroupPresentation& A,
+    const GroupPresentation& B)
 {
     std::set<Relation> new_relators;
 
@@ -236,5 +234,3 @@ GroupPresentation derived(const GroupPresentation& G)
 {
     return commutator(G,G);
 }
-
-
