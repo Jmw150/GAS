@@ -263,5 +263,36 @@ TEST_CASE("Word inverse simplification works")
     CHECK(reduced.str() == "");  // empty string after reduction
 }
 
+/*
+TEST_CASE("Orient simple word pairs") 
+{
+    Word a("xyz"), b("xy");
+
+    auto oriented = orient(a, b);
+    REQUIRE(oriented.has_value());
+    CHECK(oriented->first.str() == "xyz");
+    CHECK(oriented->second.str() == "xy");
+
+    Word same("abc");
+    CHECK(!orient(same, same).has_value());
+}
+*/
+
+TEST_CASE("Delete trivial equalities") 
+{
+    std::set<std::pair<Word, Word>> E = {
+        {Word("abc"), Word("abc")},
+        {Word("a"), Word("b")},
+        {Word("xyz"), Word("xyz")}
+    };
+
+    delete_trivial_equalities(E);
+
+    // Should only keep the non-trivial one
+    CHECK(E.size() == 1);
+    auto remaining = *E.begin();
+    CHECK(remaining.first.str() == "a");
+    CHECK(remaining.second.str() == "b");
+}
 
 

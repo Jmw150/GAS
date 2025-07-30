@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <set>
+#include <optional>
 
 
 using std::string;
@@ -117,20 +118,6 @@ public:
         return new_w;
     }
 
-/* Donald Knuth Completion Algorithm
-
-s >e l in the encompassment ordering, or
-s and l are literally similar and t > r.
-
-Delete 	 ‹ E∪{s = s} , R › 	       ⊢ ‹ E 	    , R ›
-Compose  ‹ E 	     , R∪{s → t} › ⊢ ‹ E 	    , R∪{s → u} › if t ⟶R u
-Simplify ‹ E∪{s = t} , R › 	       ⊢ ‹ E∪{s = u}, R › 	      if t ⟶R u
-Orient 	 ‹ E∪{s = t} , R › 	       ⊢ ‹ E 	    , R∪{s → t} › if s > t
-Collapse ‹ E 	     , R∪{s → t} › ⊢ ‹ E∪{u = t}, R › 	      if s ⟶R u by l → r with (s → t) ▻ (l → r)
-Deduce 	 ‹ E 	     , R › 	       ⊢ ‹ E∪{s = t}, R › 	      if (s,t) is a critical pair of R
-
-
-*/
 
     //bool areEqual(const Word& w1, const Word& w2) const;
     //bool areConjugate(const Word& w1, const Word& w2) const;
@@ -175,6 +162,45 @@ std::ostream& operator<<(std::ostream& os,
     return os;
 }
 
+
+    /* Donald Knuth Completion Algorithm
+
+    s >e l in the encompassment ordering, or
+    s and l are literally similar and t > r.
+
+Delete 	 ‹ E∪{s = s} , R › 	       ⊢ ‹ E 	    , R ›
+Compose  ‹ E 	     , R∪{s → t} › ⊢ ‹ E 	    , R∪{s → u} › if t ⟶R u
+Simplify ‹ E∪{s = t} , R › 	       ⊢ ‹ E∪{s = u}, R › 	      if t ⟶R u
+Orient 	 ‹ E∪{s = t} , R › 	       ⊢ ‹ E 	    , R∪{s → t} › if s > t
+Collapse ‹ E 	     , R∪{s → t} › ⊢ ‹ E∪{u = t}, R › 	      if s ⟶R u by l → r with (s → t) ▻ (l → r)
+Deduce 	 ‹ E 	     , R › 	       ⊢ ‹ E∪{s = t}, R › 	      if (s,t) is a critical pair of R
+
+
+    */
+
+// But will it build?
+//    std::optional<std::pair<Word, Word>> orient(const Word& lhs, const Word& rhs);
+
+//    void delete_trivial_equalities( std::set<std::pair<Word, Word>>& equations);
+
+    void delete_trivial_equalities(
+        std::set<std::pair<Word, Word>>& equations)
+    {
+        for(auto it = equations.begin(); it != equations.end();)
+        {
+            if(it->first == it->second)
+            {
+                it = equations.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+
+
+
 // Quotient on group presentation is adding more relators
 GroupPresentation quotient(const GroupPresentation& G,
                            const std::set<Relation>& new_relators)
@@ -212,7 +238,7 @@ GroupPresentation commutator(
     {
         for(const auto& b : B.generators)
         {
-            Word comm = commutator(a,b);
+            Word comm = commutator(a, b);
             new_relators.insert(Relation(comm));
         }
     }
@@ -226,11 +252,11 @@ GroupPresentation LowerCentralStep(
     const GroupPresentation& An
 )
 {
-    return commutator(A,An);
+    return commutator(A, An);
 }
 
 
 GroupPresentation derived(const GroupPresentation& G)
 {
-    return commutator(G,G);
+    return commutator(G, G);
 }
