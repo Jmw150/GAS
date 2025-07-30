@@ -11,7 +11,7 @@
 #include <iostream>
 #include <set>
 #include <optional>
-
+#include <vector>
 
 using std::string;
 using std::set;
@@ -281,6 +281,32 @@ bool collapse(std::set<std::pair<Word, Word>>& E,
     E.insert({u, t});        // insert new equation
     return true;
 }
+
+
+bool starts_with(const std::string& str, const std::string& prefix) 
+{
+    return str.size() >= prefix.size() &&
+           std::equal(prefix.begin(), prefix.end(), str.begin());
+}
+
+std::vector<Word> find_overlaps(const Word& lhs1, const Word& lhs2)
+{
+    std::vector<Word> overlaps;
+    std::string s1 = lhs1.str();
+    std::string s2 = lhs2.str();
+
+    for (size_t i = 1; i < s1.size(); ++i) {
+        std::string suffix = s1.substr(i);
+        if (starts_with(s2, suffix)) {
+            std::string overlap_str = s1 + s2.substr(suffix.length());
+            overlaps.emplace_back(overlap_str);
+        }
+    }
+
+    return overlaps;
+}
+
+
 
 
 // Quotient on group presentation is adding more relators

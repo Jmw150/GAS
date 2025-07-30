@@ -425,18 +425,35 @@ TEST_CASE("Collapse rewrites lhs and moves rule to equation") {
 TEST_CASE("Collapse does nothing if no reduction") {
     std::set<std::pair<Word, Word>> E;
     std::set<std::pair<Word, Word>> R = {
-        {Word("abc"), Word("bcd")}     // not reducible
+        {Word("abc"), Word("bcd")},     // not reducible
+        {Word("xyz"), Word("t")}
     };
 
     bool changed = collapse(E, R, {Word("xyz"), Word("t")});
 
     CHECK(changed == false);
 //for (const auto& rule : R) {
- //   std::cout << "Rule: " << rule.first << " → " << rule.second << "\n";
+ //  std::cout << "Rule: " << rule.first << " → " << rule.second << "\n";
 //}
 
 
     CHECK(R.find({Word("xyz"), Word("t")}) != R.end());   // rule still there
     CHECK(E.empty());                                     // no new equations
+}
+
+TEST_CASE("find_overlaps between lhs1 and lhs2") {
+    Word lhs1("abc");
+    Word lhs2("bcd");
+
+    auto overlaps = find_overlaps(lhs1, lhs2);
+
+    CHECK(overlaps.size() == 1);
+    CHECK(overlaps[0].str() == "abcd");
+
+    Word lhs3("xyz");
+    Word lhs4("uvw");
+
+    auto no_overlap = find_overlaps(lhs3, lhs4);
+    CHECK(no_overlap.empty());
 }
 
