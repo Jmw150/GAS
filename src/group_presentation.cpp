@@ -163,7 +163,8 @@ std::ostream& operator<<(std::ostream& os,
 }
 
 
-    /* Donald Knuth Completion Algorithm
+/* Donald Knuth Completion Algorithm
+//{
 
     s >e l in the encompassment ordering, or
     s and l are literally similar and t > r.
@@ -175,16 +176,11 @@ Orient 	 ‹ E∪{s = t} , R › 	       ⊢ ‹ E 	    , R∪{s → t} › if s
 Collapse ‹ E 	     , R∪{s → t} › ⊢ ‹ E∪{u = t}, R › 	      if s ⟶R u by l → r with (s → t) ▻ (l → r)
 Deduce 	 ‹ E 	     , R › 	       ⊢ ‹ E∪{s = t}, R › 	      if (s,t) is a critical pair of R
 
+//}
+*/
 
-    */
 
-// But will it build?
-//    std::optional<std::pair<Word, Word>> orient(const Word& lhs, const Word& rhs);
-
-//    void delete_trivial_equalities( std::set<std::pair<Word, Word>>& equations);
-
-    void delete_trivial_equalities(
-        std::set<std::pair<Word, Word>>& equations)
+void delete_trivial_equalities(std::set<std::pair<Word, Word>>& equations)
     {
         for(auto it = equations.begin(); it != equations.end();)
         {
@@ -199,6 +195,92 @@ Deduce 	 ‹ E 	     , R › 	       ⊢ ‹ E∪{s = t}, R › 	      if (s,t) 
         }
     }
 
+using RewriteRule = std::pair<Word, Word>; // s → t
+std::set<RewriteRule> R;
+
+Word reduce(const Word& w, const std::set<RewriteRule>& rules) 
+{
+    Word current = w;
+    bool changed;
+
+    do {
+        changed = false;
+        for (const auto& [lhs, rhs] : rules) {
+            size_t pos = current.find(lhs);
+            if (pos != std::string::npos) {
+                current = current.erase(pos, lhs.length()).insert(pos, rhs);
+                changed = true;
+                break; // restart left-to-right
+            }
+        }
+    } while (changed);
+
+    return current;
+}
+
+bool compose(std::set<RewriteRule>& R, const RewriteRule& rule) 
+{
+    const auto& [s, t] = rule;
+    Word u = reduce(t, R);
+
+    if (u == t) return false; // no change
+
+    // Remove old rule and insert new one
+    R.erase(rule);
+    R.insert({s, u});
+    return true;
+}
+
+bool simplify(std::set<std::pair<Word, Word>>& E,
+              const std::set<std::pair<Word, Word>>& R,
+              const std::pair<Word, Word>& eq)
+{
+    const auto& [s, t] = eq;
+    Word u = reduce(t, R);
+
+    if (u == t) return false; // nothing to simplify
+
+    E.erase(eq);
+    E.insert({s, u});
+    return true;
+}
+
+bool orient(std::set<std::pair<Word, Word>>& E,
+            std::set<std::pair<Word, Word>>& R,
+            const std::pair<Word, Word>& eq)
+{
+    const auto& [s, t] = eq;
+
+    if (s == t) return false;
+
+    Word lhs = s;
+    Word rhs = t;
+
+    if (t > s) std::swap(lhs, rhs); // ensure lhs > rhs
+
+    E.erase(eq);
+    R.insert({lhs, rhs});
+    return true;
+}
+
+bool collapse(std::set<std::pair<Word, Word>>& E,
+              std::set<std::pair<Word, Word>>& R,
+              const std::pair<Word, Word>& rule)
+{
+    const auto& [s, t] = rule;
+
+    // Create R′ = R \ {rule}
+    std::set<std::pair<Word, Word>> R_prime = R;
+    R_prime.erase(rule);
+
+    Word u = reduce(s, R_prime);
+
+    if (u == s) return false; // s is already irreducible in R'
+
+    R.erase(rule);           // remove the collapsing rule
+    E.insert({u, t});        // insert new equation
+    return true;
+}
 
 
 // Quotient on group presentation is adding more relators

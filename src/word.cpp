@@ -46,6 +46,17 @@ public:
         return Word(rev);
     }
 
+    Word& insert(std::size_t pos, const Word& other)
+    {
+        if(pos > word.size())
+        {
+            pos = word.size();    // Clamp to avoid overflow
+        }
+        word.insert(pos, other.word);
+        return *this;
+    }
+
+
     // For ordered containers like std::set
     bool operator<(const Word& other) const
     {
@@ -193,14 +204,16 @@ class Generator: public Word
 {
 public:
 
-    explicit Generator(char w) : Word(std::string(1, w)) {}    
+    explicit Generator(char w) : Word(std::string(1, w)) {}
 
     explicit Generator(const std::string& w)
-        : Word(w) 
+        : Word(w)
     {
 
-        if (w.size() != 1)
+        if(w.size() != 1)
+        {
             throw std::invalid_argument("Generator must be a single character string.");
+        }
 
     }
 };

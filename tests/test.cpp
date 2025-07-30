@@ -136,7 +136,47 @@ TEST_CASE("Word to substring")
     Word what("What");
     CHECK(w.subword(0, 4).str() == "What");
 }
+
+TEST_CASE("Word insert function") 
+{
+    Word w("abc");
+    Word x("X");
+
+    SUBCASE("Insert in middle") {
+        Word w1 = w;
+        w1.insert(1, x);  // aXbc
+        CHECK(w1.str() == "aXbc");
+    }
+
+    SUBCASE("Insert at beginning") {
+        Word w2 = w;
+        w2.insert(0, x);  // Xabc
+        CHECK(w2.str() == "Xabc");
+    }
+
+    SUBCASE("Insert at end") {
+        Word w3 = w;
+        w3.insert(w3.length(), x);  // abcX
+        CHECK(w3.str() == "abcX");
+    }
+
+    SUBCASE("Insert empty word") {
+        Word w4 = w;
+        Word empty("");
+        w4.insert(1, empty);  // no change
+        CHECK(w4.str() == "abc");
+    }
+
+    SUBCASE("Insert past end clamps") {
+        Word w5("hi");
+        w5.insert(99, Word("Z"));
+        CHECK(w5.str() == "hiZ");
+    }
+}
+
 //}
+
+
 
 TEST_CASE("Generator from string")
 {
@@ -295,4 +335,108 @@ TEST_CASE("Delete trivial equalities")
     CHECK(remaining.second.str() == "b");
 }
 
+TEST_CASE("Compose step rewrites rhs using existing rules") {
+    Word s("abc");
+    Word t("xY");
+
+    std::set<RewriteRule> R = {
+        {Word("Y"), Word("Z")}  // Y → Z
+    };
+
+    R.insert({s, t}); // abc → xY
+
+    bool changed = compose(R, {s, t});
+
+    CHECK(changed == true);
+    CHECK(R.find({s, Word("xZ")}) != R.end());
+}
+
+TEST_CASE("Simplify equation using existing rewrite rules") {
+    std::set<std::pair<Word, Word>> E = {
+        {Word("a"), Word("XY")}
+    };
+
+    std::set<std::pair<Word, Word>> R = {
+        {Word("Y"), Word("Z")}
+    };
+
+    bool changed = simplify(E, R, {Word("a"), Word("XY")});
+
+    CHECK(changed == true);
+    CHECK(E.find({Word("a"), Word("XZ")}) != E.end());
+}
+
+TEST_CASE("Orient equation into rewrite rule when lhs > rhs") {
+    std::set<std::pair<Word, Word>> E = {
+        {Word("xyz"), Word("xy")}
+    };
+
+    std::set<std::pair<Word, Word>> R;
+
+    bool changed = orient(E, R, {Word("xyz"), Word("xy")});
+
+    CHECK(changed == true);
+    CHECK(E.empty());
+    CHECK(R.find({Word("xyz"), Word("xy")}) != R.end());
+}
+
+TEST_CASE("Orient flips direction if rhs > lhs") {
+    std::set<std::pair<Word, Word>> E = {
+        {Word("a"), Word("abc")}
+    };
+
+    std::set<std::pair<Word, Word>> R;
+
+    bool changed = orient(E, R, {Word("a"), Word("abc")});
+
+    CHECK(changed == true);
+    CHECK(R.find({Word("abc"), Word("a")}) != R.end());
+}
+
+TEST_CASE("Orient does nothing for s == t") {
+    std::set<std::pair<Word, Word>> E = {
+        {Word("same"), Word("same")}
+    };
+
+    std::set<std::pair<Word, Word>> R;
+
+    bool changed = orient(E, R, {Word("same"), Word("same")});
+
+    CHECK(changed == false);
+    CHECK(E.find({Word("same"), Word("same")}) != E.end());
+    CHECK(R.empty());
+}
+
+TEST_CASE("Collapse rewrites lhs and moves rule to equation") {
+    std::set<std::pair<Word, Word>> E;
+    std::set<std::pair<Word, Word>> R = {
+        {Word("AA"), Word("A")},       // used to reduce
+        {Word("AAA"), Word("b")}       // candidate for collapse
+    };
+
+    bool changed = collapse(E, R, {Word("AAA"), Word("b")});
+
+    CHECK(changed == true);
+    CHECK(R.find({Word("AAA"), Word("b")}) == R.end());   // rule removed
+    CHECK(E.find({Word("A"), Word("b")}) != E.end());     // u = t added
+}
+
+// This fails
+TEST_CASE("Collapse does nothing if no reduction") {
+    std::set<std::pair<Word, Word>> E;
+    std::set<std::pair<Word, Word>> R = {
+        {Word("abc"), Word("bcd")}     // not reducible
+    };
+
+    bool changed = collapse(E, R, {Word("xyz"), Word("t")});
+
+    CHECK(changed == false);
+//for (const auto& rule : R) {
+ //   std::cout << "Rule: " << rule.first << " → " << rule.second << "\n";
+//}
+
+
+    CHECK(R.find({Word("xyz"), Word("t")}) != R.end());   // rule still there
+    CHECK(E.empty());                                     // no new equations
+}
 
