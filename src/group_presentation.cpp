@@ -368,3 +368,10 @@ GroupPresentation derived(const GroupPresentation& G)
 {
     return commutator(G, G);
 }
+
+void print_rules(const std::set<std::pair<Word, Word>>& rules) {
+    for (const auto& [lhs, rhs] : rules) {
+        std::cout << lhs.str() << " → " << rhs.str() << '\n';
+    }
+}
+

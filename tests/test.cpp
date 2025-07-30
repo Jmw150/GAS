@@ -457,3 +457,123 @@ TEST_CASE("find_overlaps between lhs1 and lhs2") {
     CHECK(no_overlap.empty());
 }
 
+TEST_CASE("delete_trivial_equalities removes only equal pairs") {
+    std::set<std::pair<Word, Word>> E = {
+        {Word("a"), Word("a")},
+        {Word("ab"), Word("ab")},
+        {Word("a"), Word("b")},
+        {Word("abc"), Word("ab")}
+    };
+
+    delete_trivial_equalities(E);
+
+    CHECK(E.size() == 2);
+    CHECK(E.find({Word("a"), Word("b")}) != E.end());
+    CHECK(E.find({Word("abc"), Word("ab")}) != E.end());
+}
+
+TEST_CASE("reduce applies rewrite rules until fixed point") {
+    std::set<std::pair<Word, Word>> R = {
+        {Word("ab"), Word("c")},
+        {Word("c"), Word("d")}
+    };
+
+    Word w("xabyz");
+    Word reduced = reduce(w, R);
+
+    CHECK(reduced.str() == "xdyz");  // ab → c → d
+}
+
+TEST_CASE("compose upgrades a rule rhs using existing rules") {
+    std::set<std::pair<Word, Word>> R = {
+        {Word("Y"), Word("Z")}
+    };
+
+    R.insert({Word("abc"), Word("xY")});
+
+    bool changed = compose(R, {Word("abc"), Word("xY")});
+
+    CHECK(changed == true);
+    CHECK(R.find({Word("abc"), Word("xZ")}) != R.end());
+}
+
+TEST_CASE("simplify updates rhs of equation when reducible") {
+    std::set<std::pair<Word, Word>> E = {
+        {Word("lhs"), Word("MZ")}
+    };
+    std::set<std::pair<Word, Word>> R = {
+        {Word("Z"), Word("T")}
+    };
+
+    bool changed = simplify(E, R, {Word("lhs"), Word("MZ")});
+
+    CHECK(changed == true);
+    CHECK(E.find({Word("lhs"), Word("MT")}) != E.end());
+}
+
+TEST_CASE("orient flips and inserts properly") {
+    std::set<std::pair<Word, Word>> E = {
+        {Word("a"), Word("abc")}
+    };
+    std::set<std::pair<Word, Word>> R;
+
+    bool changed = orient(E, R, {Word("a"), Word("abc")});
+
+    CHECK(changed == true);
+    CHECK(E.empty());
+    CHECK(R.find({Word("abc"), Word("a")}) != R.end());
+}
+
+TEST_CASE("reduce handles overlapping and nested rewrites") {
+    std::set<std::pair<Word, Word>> R = {
+        {Word("aba"), Word("x")},
+        {Word("x"), Word("y")}
+    };
+
+    Word w("ababa");  // contains overlapping aba twice
+
+    Word reduced = reduce(w, R);
+    CHECK(reduced.str().find("y") != std::string::npos);
+}
+
+TEST_CASE("compose supports multi-step reduction of rhs") {
+    std::set<std::pair<Word, Word>> R = {
+        {Word("B"), Word("C")},
+        {Word("C"), Word("D")}
+    };
+
+    R.insert({Word("X"), Word("AB")});
+
+    compose(R, {Word("X"), Word("AB")});
+
+    CHECK(R.find({Word("X"), Word("AD")}) != R.end());
+}
+
+TEST_CASE("simplify does nothing if rhs is irreducible") {
+    std::set<std::pair<Word, Word>> E = {
+        {Word("x"), Word("q")}
+    };
+    std::set<std::pair<Word, Word>> R = {
+        {Word("a"), Word("b")}
+    };
+
+    bool changed = simplify(E, R, {Word("x"), Word("q")});
+    CHECK(changed == false);
+    CHECK(E.find({Word("x"), Word("q")}) != E.end());
+}
+
+TEST_CASE("collapse only uses other rules, not itself") {
+    std::set<std::pair<Word, Word>> E;
+    std::set<std::pair<Word, Word>> R = {
+        {Word("X"), Word("Y")},
+        {Word("XX"), Word("X")}  // should collapse
+    };
+
+    bool changed = collapse(E, R, {Word("XX"), Word("X")});
+    CHECK(changed == true);
+    CHECK(R.find({Word("XX"), Word("X")}) == R.end());
+
+    CHECK(E.find({Word("Y"), Word("X")}) != R.end());
+}
+
+
