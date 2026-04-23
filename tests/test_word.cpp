@@ -1,4 +1,4 @@
-#include "../src/group_presentation.cpp"
+#include "../src/group_presentation.hpp"
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "../src/doctest.hpp"
@@ -34,11 +34,11 @@ TEST_CASE("Free group presentation prints generators")
     CHECK(oss.str() == "<a,b | >");
 }
 
-TEST_CASE("Inverse flips case for each letter")
+TEST_CASE("Inverse reverses and flips case")
 {
     Word w("aAbBB");
     Word result = inverse(w);
-    CHECK(result.str() == "AaBbb");
+    CHECK(result.str() == "bbBaA");
 }
 
 TEST_CASE("Derived presentation on two generators has four commutator relators")

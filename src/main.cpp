@@ -1,8 +1,4 @@
-#include "group_presentation.cpp"
+#include "group_presentation.hpp"
 
+int main() { return 0; }
 
-int main()
-{
-
-    return 0;
-}

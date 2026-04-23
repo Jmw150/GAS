@@ -1,0 +1,34 @@
+#+TITLE: GAS Improvement TODO
+
+* Correctness
+** DONE Fix ~inverse()~ to reverse word order in addition to flipping case
+   Both ~Word::inverse()~ and the free ~inverse()~ only flip character case.
+   The group-theoretic inverse of "abc" should be "CBA", not "ABC".
+** DONE Fix ~reduce_inverses()~ to iterate to a fixed point
+   Single-pass only catches adjacent pairs. "abBA" reduces to "aA" instead
+   of "" because the second cancellation requires a second pass.
+** DONE Fix test.cpp:696 bug — ~R.end()~ should be ~E.end()~
+   ~CHECK(E.find({Word("Y"), Word("X")}) != R.end())~ checks the wrong set.
+
+* Design
+** DONE Remove global mutable ~R~ variable from group_presentation
+   ~std::set<RewriteRule> R;~ at file scope is an unused development artifact.
+** DONE Split ~.cpp~ files into ~.hpp~ headers
+   Add ~#pragma once~ and proper includes so files are self-contained.
+   Mark all standalone free functions ~inline~ to avoid multiple-definition
+   errors when the headers are included by more than one translation unit.
+** DONE Replace custom ~starts_with~ helper with standard approach
+   The helper duplicates functionality; inline with ~rfind(prefix, 0) == 0~.
+
+* Minor
+** DONE Fix ~Word::length()~ to return ~size_t~ instead of ~int~
+   Wrapping ~std::string::length()~ (which returns ~size_t~) in an ~int~
+   causes signed/unsigned comparison warnings throughout.
+** DONE Remove commented-out ~orient~ test for old API signature
+   Leftover from an API change; adds noise with no value.
+** DONE Simplify ~GroupPresentation~ constructors
+   Inserting ~Generator(s)~ one-by-one from a set of generators is redundant;
+   assign directly via member-initializer list.
+** DONE Update tests to reflect correct ~inverse()~ behavior
+** DONE Update tests to reflect fixed ~reduce_inverses()~ behavior
+** DONE Make ~Word::inverse()~ const
